@@ -93,3 +93,6 @@ public/
 
 # Mac OS
 .DS_Store
+
+# TurboRepo
+.turbo

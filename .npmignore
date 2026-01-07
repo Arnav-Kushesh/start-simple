@@ -24,3 +24,6 @@ yarn-error.log*
 
 # Ignore the brain artifacts (if they happen to be in root, though they are usually in separate dir)
 .gemini/
+
+# TurboRepo
+.turbo
