@@ -67,13 +67,13 @@ We wanted to create a way to add SSR & SSG features with minimal code changes on
 
 ## Benefits
 
-- Minimal learning curve - You only require the knowledge of basic react app & express backend
+- Minimal learning curve - You only require knowledge of react & express
 - Minimal need to change frontend code - Frontend is a standard react app
 - Works with any frontend technology - You can replace the frontend folder with any other technology and it will still work
 
 ## Installation
 
-`npm create-simple-fullstack-project`
+`npx create-simple-fullstack-project`
 
 ## How to run dev server
 
