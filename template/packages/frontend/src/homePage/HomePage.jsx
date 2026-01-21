@@ -5,9 +5,10 @@ function HomePage() {
   return (
     <div>
       <header>
-        <h1>simple-monolith</h1>
+        <h1>create-simple-fullstack-project</h1>
         <p className="subtitle">
-          Add static generation & ssr to your application with minimal setup
+          One of the most minimal way to create fullstack project that supports
+          SSR, SSG, Sitemap Generation & Mobile Dev out of the box
         </p>
       </header>
       - Minimal learning curve - Minimal need to change frontend code -

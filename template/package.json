@@ -1,5 +1,5 @@
 {
-  "name": "simple-monolith",
+  "name": "create-simple-fullstack-project-template",
   "private": true,
   "workspaces": [
     "packages/*"

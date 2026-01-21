@@ -50,6 +50,10 @@ export default async function simpleSiteOptimizer({
     compression: true,
   });
 
+  const templateRoutesSet = new Set(
+    dynamicRoutes.map((route) => removeTrailingSlash(route.templateRoute))
+  );
+
   // 4. Main Server
   const mainApp = express();
   mainApp.use(cors());
@@ -60,6 +64,10 @@ export default async function simpleSiteOptimizer({
     let [reqPath, queryString] = reqPathRaw.split("?");
     reqPath = removeTrailingSlash(reqPath);
     // parse query params
+
+    if (templateRoutesSet.has(reqPath)) {
+      return res.redirect("/404");
+    }
 
     // Check if it's a static route
     if (staticRoutes.includes(reqPath)) {

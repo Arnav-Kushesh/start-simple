@@ -1,9 +1,9 @@
 {
-  "name": "create-simple-monolith-app",
+  "name": "create-simple-fullstack-project",
   "version": "1.0.2",
-  "description": "Scaffolding tool for Simple Monolith projects",
+  "description": "One of the most minimal way to create fullstack project that supports SSR, SSG, Sitemap Generation out of the box",
   "bin": {
-    "create-simple-monolith-app": "./index.js"
+    "create-simple-fullstack-project": "./index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
