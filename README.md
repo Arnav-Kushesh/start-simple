@@ -4,7 +4,7 @@ One of the most minimal way to create fullstack project that supports SSR, SSG &
 
 ## Why this project was created
 
-We wanted to create a way to add SSR & SSG features to react app with minimal code changes on the frontend
+We wanted to create a way to add SSR & SSG features with minimal code changes on the frontend
 
 ## How Static Site Generation Works?
 
