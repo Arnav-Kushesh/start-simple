@@ -22,11 +22,11 @@ We wanted to create a way to add SSR & SSG features with minimal code changes on
   - After making the api requests you only need to do `window.EXPORT_STATIC_PAGE_DATA = data `
   - Then this data will be saved at build time
   - After that you can use this saved data using the following logic
-  - ```
-        let preLoadedData = window.getPreLoadedData
-          ? window.getPreLoadedData()
-          : null;
-    ```
+
+  ```js
+  let preLoadedData = window.getPreLoadedData && window.getPreLoadedData();
+  ```
+
   - The `getPreLoadedData` function is injected by the server, you don't need to import any library to use it
   - getPreLoadedData checks the page path and then provides the data you assigned to `window.EXPORT_STATIC_PAGE_DATA`
 
@@ -44,11 +44,8 @@ We wanted to create a way to add SSR & SSG features with minimal code changes on
 - hydration might break if non-deterministic logic is being used like Math.random, in that case you can restrict SSR to BOT_ONLY by passing the config `dynamicRendering:BOT_ONLY`
 - The data loaded from the loader function can be accessed by using the following logic
 
-```
-  let preLoadedData = window.getPreLoadedData
-            ? window.getPreLoadedData()
-            : null;
-
+```js
+let preLoadedData = window.getPreLoadedData && window.getPreLoadedData();
 ```
 
 ## Use Cases
@@ -97,7 +94,7 @@ To enable sitemap generation, you need to update your `config.js` file inside of
 
 Add the `domain` property to your exported config object. This is used to construct absolute URLs in the sitemap.
 
-```javascript
+```js
 let config = {
   // ... other config options
   domain: "https://your-domain.com",
@@ -130,7 +127,7 @@ It should return an array of objects, each containing:
 
 Here is a complete example of how to configure a dynamic route for blog posts:
 
-```javascript
+```js
 const dynamicRoutes = [
   {
     path: "/post/:id",
