@@ -1,4 +1,4 @@
-## Start Simple
+## 🌻 Start Simple
 
 A minimal way to create fullstack project that supports SSR, SSG & Sitemap Generation out of the box
 

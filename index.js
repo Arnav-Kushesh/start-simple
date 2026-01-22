@@ -6,7 +6,7 @@ const prompts = require("prompts");
 const pc = require("picocolors");
 
 async function init() {
-  console.log(pc.cyan("\n  Welcome To Start Simple  \n"));
+  console.log(pc.cyan("\n 🌻 Welcome To Start Simple 🌻 \n"));
 
   // 1. Get Project Name
   let targetDir = process.argv[2];
