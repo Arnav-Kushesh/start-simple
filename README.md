@@ -4,7 +4,7 @@
 <h3>StartSimple.js</h3>
 <br/>
 
-![Static Badge](https://img.shields.io/badge/DISCORD-JOIN-blue?style=for-the-badge&logo=discord&labelColor=black&color=%235965f2&link=https%3A%2F%2Fdiscord.com%2Finvite%2F3XzqKYdchP) ![NPM License](https://img.shields.io/npm/l/start-simple?style=for-the-badge&labelColor=black&color=green) ![NPM Version](https://img.shields.io/npm/v/start-simple?style=for-the-badge&labelColor=black&color=green)
+![Static Badge](https://img.shields.io/badge/DISCORD-JOIN-blue?style=for-the-badge&logo=discord&labelColor=black&color=%235965f2&link=https%3A%2F%2Fdiscord.com%2Finvite%2F3XzqKYdchP) ![NPM License](https://img.shields.io/npm/l/start-simple?style=for-the-badge&labelColor=black&color=blue) ![NPM Version](https://img.shields.io/npm/v/start-simple?style=for-the-badge&labelColor=black&color=blue)
 
 </div>
 
