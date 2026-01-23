@@ -1,8 +1,8 @@
 <div align="center">
 
-  <img alt="start-simple-logo" src="https://raw.githubusercontent.com/arnav-kushesh/start-simple/master/assets/sunflower.png" height="128">
-
-  <h3>StartSimple.js</h3>
+<img alt="start-simple-logo" src="https://raw.githubusercontent.com/arnav-kushesh/start-simple/master/assets/sunflower.png" height="128"/>
+<h3>StartSimple.js</h3>
+<br/>
 
 ![Static Badge](https://img.shields.io/badge/DISCORD-JOIN-blue?style=for-the-badge&logo=discord&labelColor=black&color=%235965f2&link=https%3A%2F%2Fdiscord.com%2Finvite%2F3XzqKYdchP) ![NPM License](https://img.shields.io/npm/l/start-simple?style=for-the-badge&labelColor=black&color=green) ![NPM Version](https://img.shields.io/npm/v/start-simple?style=for-the-badge&labelColor=black&color=green)
 
