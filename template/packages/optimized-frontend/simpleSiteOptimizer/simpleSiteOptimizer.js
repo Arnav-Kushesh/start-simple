@@ -15,6 +15,7 @@ import { handleSitemapRequest } from "./sitemapGenerator.js";
  * @param {number} options.port - Main server port
  * @param {number} [options.prerenderingPort=4050] - Port for prerendering server
  * @param {'BOT_ONLY' | 'ALL_REQUESTS'} [options.dynamicRendering='ALL_REQUESTS'] - Prerendering strategy for dynamic routes
+ * @param {'BOT_ONLY' | 'ALL_REQUESTS'} [options.staticRendering='ALL_REQUESTS'] - Prerendering strategy for static routes
  * @param {string} options.domain - Domain for the sitemap
  */
 
@@ -37,6 +38,7 @@ export default async function simpleSiteOptimizer(config) {
     port,
     prerenderingPort = 4050,
     dynamicRendering = "ALL_REQUESTS",
+    staticRendering = "ALL_REQUESTS",
     domain,
   } = config;
 
@@ -67,6 +69,10 @@ export default async function simpleSiteOptimizer(config) {
   mainApp.use(async (req, res, next) => {
     const reqPathRaw = req.path;
 
+    const isBot = /bot|googlebot|crawler|spider|robot|crawling/i.test(
+      req.headers["user-agent"] || "",
+    );
+
     // Check for sitemap request
     if (reqPathRaw.startsWith("/sitemap")) {
       const handled = await handleSitemapRequest(req, res, config);
@@ -91,6 +97,10 @@ export default async function simpleSiteOptimizer(config) {
 
     // Check if it's a static route
     if (staticRoutes.includes(reqPath)) {
+      if (staticRendering === "BOT_ONLY" && !isBot) {
+        return next();
+      }
+
       const cached = db.get(reqPath);
       if (cached) {
         // cached is { html, data }
@@ -136,9 +146,6 @@ export default async function simpleSiteOptimizer(config) {
       if (result) {
         // Found a match
         // Check Prerendering Mode
-        const isBot = /bot|googlebot|crawler|spider|robot|crawling/i.test(
-          req.headers["user-agent"] || "",
-        );
 
         if (dynamicRendering === "BOT_ONLY" && !isBot) {
           break;

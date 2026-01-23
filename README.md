@@ -11,7 +11,7 @@
 
 ## What is "Start Simple"
 
-A minimal way to create fullstack project that supports SSR, SSG & Sitemap Generation out of the box
+A minimal way to create fullstack project that supports SSR, SSG & sitemap generation out of the box
 
 ## Why this project was created
 
@@ -19,40 +19,41 @@ We wanted to create a way to add SSR & SSG features with minimal code changes on
 
 ## How Static Site Generation Works?
 
-- Basically static site generation is done through puppeteer at build time
-- The advantage of this method is that the frontend code requires zero change to support static generation
-- All you need to do is mention all the static routes
-- At build time,the package will scrape all of those routes and save it on the server
+- Basically static site generation is done through Puppeteer at build time
+- The advantage of this method is that the frontend code requires little to no change to support static generation
+- All you need to do is mention all the static routes in `/optimized-frontend/config.js`
+- At build time, static routes are saved on the server in rendered form
 - When a user or bot tries to access that route, the saved result is served, improving SEO & performance
 - Bots can easily crawl the page without needing to execute JS
 - Browsers can instantly show UI without needing to do CSR to show the initial UI
-- For saving the rendered static routes puppeteer is used, puppeteer only runs at build time. So, there is no impact on performance
-- We call this method: scrapping based static generation & ssr
-- If UI on the static page relies on api requests then that data will also be saved during the build time
+- For saving the rendered static routes Puppeteer is used, Puppeteer only runs at build time. So, there is no impact on performance
+- We call this method: Scrapping based SSG & SSR
+- If UI on the static page relies on api requests then that data also needed to be saved at build time for SSG to work
   - To ensure that this data is not loaded again by JS use the following setup
   - After making the api requests you only need to do `window.EXPORT_STATIC_PAGE_DATA = data `
-  - Then this data will be saved at build time
-  - After that you can use this saved data using the following logic
+  - Then this data will be saved at build time using Puppeteer
+  - After that you can use this saved data on the client side ensuring the same UI is rendered
 
   ```js
   let preLoadedData = window.getPreLoadedData && window.getPreLoadedData();
   ```
 
   - The `getPreLoadedData` function is injected by the server, you don't need to import any library to use it
-  - getPreLoadedData checks the page path and then provides the data you assigned to `window.EXPORT_STATIC_PAGE_DATA`
+  - `getPreLoadedData` checks the page path and then provides the data you assigned to `window.EXPORT_STATIC_PAGE_DATA`
+  - hydration might break if non-deterministic logic is being used like Math.random, in that case you can restrict SSG to `BOT_ONLY` by passing the config `staticRendering:BOT_ONLY` in `/optimized-frontend/config.js`
 
 ## How Server Side Rendering Works?
 
 - Let's say you have post pages. In that case static generation isn't practical because you might have thousands or millions of post pages
-- We will have to do server side rendering
-- You will have to provide list of dynamic routes with a loader function and a template
+- We will have to do server side rendering for this
+- You will have to provide list of dynamic routes with a loader function and a template in `/optimized-frontend/config.js`
 - For providing the template you need to create a route in the frontend that serves the template.
-- For example /post-page-template, you can use handlebar syntax inside your react / vue component
+- For example template can be served at /post-page-template, you can use handlebar syntax inside your react / vue component
 - Make sure it is the same component structure that serves post pages
 - Once the post-page-template has been saved on the server, users & bots will be prevented from visiting that route
 - Data extracted from the loader function will be injected in /post-page-template to serve users when they visit /post/123 page
-- because the component itself it being used for templating, hydration won't be an issue
-- hydration might break if non-deterministic logic is being used like Math.random, in that case you can restrict SSR to BOT_ONLY by passing the config `dynamicRendering:BOT_ONLY`
+- The component itself it being used for templating. So hydration won't be an issue
+- hydration might break if non-deterministic logic is being used like Math.random, in that case you can restrict SSR to `BOT_ONLY` by passing the config `dynamicRendering:BOT_ONLY` in `/optimized-frontend/config.js`
 - The data loaded from the loader function can be accessed by using the following logic
 
 ```js
@@ -64,14 +65,14 @@ let preLoadedData = window.getPreLoadedData && window.getPreLoadedData();
 ### Add SSR to a capacitor project
 
 - Capacitor requires a clean build folder to function, but in frameworks like Next.js & Tanstack backend and frontend codebase is very closely integrated
-- Capacitor is only supposed to run frontend code.
-- So it takes significant workarounds to make Next.js / Tanstack to work with Capacitor without compromising on SSR
-- With scrapping based static generation & ssr, the capacitor project requires little to no change
+- Capacitor can only run frontend code.
+- So it takes significant workarounds to make Next.js / Tanstack work with Capacitor without compromising on SSR
+- With scrapping based SSG & SSR, the capacitor project requires very minimal changes
 
 ### Huge codebase
 
 - If you have a big project, rewriting it in Remix / Next.js / Tanstack might not be economical in some cases
-- With our implementation frontend code requires little to no change
+- With our implementation frontend code requires very minimal changes
 
 ## Benefits
 

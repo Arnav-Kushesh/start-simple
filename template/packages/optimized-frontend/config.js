@@ -60,7 +60,8 @@ let config = {
   ],
   port: PORT,
   prerenderingPort: PRERENDER_PORT,
-  dynamicRendering: "ALL_REQUESTS", // or 'BOT_ONLY'
+  staticRendering: "BOT_ONLY", // or 'BOT_ONLY'
+  dynamicRendering: "BOT_ONLY", // or 'BOT_ONLY'
   domain: "https://example.com",
 };
 
