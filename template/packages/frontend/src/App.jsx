@@ -1,5 +1,7 @@
 import { Routes, Route, Link } from "react-router-dom";
-import routes from "./router";
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Post from "./pages/Post";
 import "./App.css";
 
 /**
@@ -25,13 +27,9 @@ export default function App() {
       </header>
       <main>
         <Routes>
-          {routes.map((route) => (
-            <Route
-              key={route.path}
-              path={route.path}
-              element={<route.Component />}
-            />
-          ))}
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/post/:id" element={<Post />} />
         </Routes>
       </main>
     </div>
