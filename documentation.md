@@ -99,12 +99,26 @@ Located at `src/context/LoaderDataContext.jsx`. Provides two exports:
 A React context provider that wraps your app and supplies loader data.
 
 ```jsx
-<LoaderDataProvider data={loaderData}>
-  <App />
-</LoaderDataProvider>
+<BrowserRouter>
+  <LoaderDataProvider data={loaderData}>
+    <App />
+  </LoaderDataProvider>
+</BrowserRouter>
 ```
 
-For the most part you will not need to use this directly — it is handled automatically by `entry-client.jsx` and `entry-server.jsx`.
+### Client-Side Navigation
+
+After the initial page load, navigation is handled frictionlessly on the client by React Router `v6`. When a user clicks a `<Link>` component:
+
+1. The URL updates without triggering a hard browser reload.
+2. `LoaderDataContext` observes the `useLocation()` mutation and triggers a `useEffect`.
+3. The component drops into a `<Suspense>` / loading state.
+4. The requested route's `loader` function executes directly on the client, fetching JSON data from the API endpoint.
+5. The data context is updated, and the new route renders cleanly without causing React to drop its mounted DOM state.
+
+> **Note:** Because subsequent navigations trigger `renderingConfig.js` loaders fully on the client side, ensure your route configuration loaders are capable of reaching the data via an API endpoint.
+
+---
 
 ### `useLoaderData()`
 
@@ -205,8 +219,7 @@ Executes `scripts/prerender.js`:
 | `server.js` | Express SSR server |
 | `src/entry-client.jsx` | Client-side hydration entry |
 | `src/entry-server.jsx` | Server-side render function |
-| `src/App.jsx` | Root React component with routes |
-| `src/router.jsx` | Route-to-component mapping |
+| `src/App.jsx` | Root React component with `<Routes>` definitions |
 | `src/context/LoaderDataContext.jsx` | Data context + `useLoaderData` hook |
 | `scripts/prerender.js` | Build-time SSG pre-renderer |
 | `index.html` | HTML template with `<!--app-html-->` placeholder |

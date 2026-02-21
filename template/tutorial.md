@@ -1,91 +1,234 @@
-# Tutorial: Building with Start Simple JS
+# Tutorial — Start Simple
 
-Welcome! In this tutorial, we will build a new feature inside the Start Simple JS architecture.
+A step-by-step guide to building routes with SSR and SSG using Start Simple.
 
-## Goal
-We will create a new dynamic SSR route at `/user/:id` that fetches user data from the JSONPlaceholder API. 
+---
 
-## Step 1: Create the Component
-First, create your page wrapper inside `packages/frontend/src/pages/User.jsx`.
+## Prerequisites
+
+- Node.js 18+ installed
+- Basic knowledge of React and Express
+
+---
+
+## 1. Create a New Project
+
+```bash
+npx start-simple my-app
+cd my-app
+npm install
+```
+
+---
+
+## 2. Start the Dev Server
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173`. You should see the home page with navigation links.
+
+---
+
+## 3. Add a New SSG Page
+
+Let's add a `/contact` page that is statically generated.
+
+### Step 3a: Create the page component
+
+Create `packages/frontend/src/pages/Contact.jsx`:
 
 ```jsx
 import { useLoaderData } from "../context/LoaderDataContext";
+import { Link } from "react-router-dom";
 
-export default function UserProfile() {
+export default function Contact() {
   const data = useLoaderData();
 
-  if (!data) return <p>Loading user...</p>;
-
   return (
-    <div className="page user-profile">
-      <h1>{data.name}</h1>
-      <p>Email: {data.email}</p>
-      <p>Company: {data.company.name}</p>
-      <a href="/">← Back to Home</a>
+    <div className="page">
+      <h1>{data?.title || "Contact"}</h1>
+      <p>Email: {data?.email}</p>
+      <Link to="/">← Back to Home</Link>
     </div>
   );
 }
 ```
 
-Notice how we use the `useLoaderData()` hook. This hooks into our architecture to grab data seamlessly, whether navigating from the server on the initial render, or hydrating the client.
+### Step 3b: Register the route in `App.jsx`
 
-## Step 2: Add Component to the Router
-Next, we must register our React component in the system's simple route matcher. Open `packages/frontend/src/router.jsx`.
+Open `packages/frontend/src/App.jsx` and add the `<Route>`:
 
-```jsx
-import Home from "./pages/Home";
-import About from "./pages/About";
-import Post from "./pages/Post";
-import UserProfile from "./pages/User"; // Add this
+```diff
+ import Home from "./pages/Home";
+ import About from "./pages/About";
+ import Post from "./pages/Post";
++import Contact from "./pages/Contact";
 
-const routes = [
-    { path: "/", Component: Home },
-    { path: "/about", Component: About },
-    { path: "/post/:id", Component: Post },
-    { path: "/user/:id", Component: UserProfile }, // Add this
-];
+export default function App() {
+  return (
+    ...
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/post/:id" element={<Post />} />
++         <Route path="/contact" element={<Contact />} />
+        </Routes>
+    ...
 ```
 
-## Step 3: Define the Route and Loader in Config
-Now, let's configure the SSR engine to fetch data safely before rendering. Open `packages/frontend/renderingConfig.js`. 
+### Step 3c: Add the SSG route config
 
-We'll add our new route to the `ssrRoutes` array so that it dynamically fetches a fresh user payload on every page request.
+Open `packages/frontend/renderingConfig.js` and add to `ssgRoutes`:
 
-```js
-export const ssrRoutes = [
-    {
-        path: "/post/:id",
-        loader: async ({ params }) => { ... },
-    },
-    {
-        // Add our new user route definition
-        path: "/user/:id",
-        loader: async ({ params }) => {
-            const res = await fetch(`https://jsonplaceholder.typicode.com/users/${params.id}`);
-            if (!res.ok) throw new Error("User not found");
-            return res.json();
-        }
-    }
-];
+```diff
+ export const ssgRoutes = [
+   {
+     path: "/",
+     loader: async () => ({ title: "Welcome to Start Simple", description: "..." }),
+   },
+   {
+     path: "/about",
+     loader: async () => ({ title: "About Start Simple", mission: "..." }),
+   },
++  {
++    path: "/contact",
++    loader: async () => ({
++      title: "Contact Us",
++      email: "hello@example.com",
++    }),
++  },
+ ];
 ```
 
-## Step 4: Add a Link
-We use standard `<a>` tags in Start Simple JS to avoid "dual React instance" conflicts across Server and Client Vite modules. Let's add a link on the Home page (`src/pages/Home.jsx`).
+### Step 3d: Test it
 
-```jsx
-  <nav className="page-links">
-    <a href="/about">About</a>
-    <span className="separator">·</span>
-    <a href="/post/1">Example Post</a>
-    <span className="separator">·</span>
-    <a href="/user/1">User Profile</a>
-  </nav>
-```
-
-## Step 5: Start the Dev Server
-Run the optimized development server to test your changes with Vite HMR + SSR!
 ```bash
 npm run dev
 ```
 
-Visit the homepage and click the `User Profile` link. You'll see the page fetch data efficiently on the server and render the HTML directly to your browser for perfect SEO points!
+Visit `http://localhost:5173/contact`. View the page source — the HTML should include the title and email, proving it was server-rendered.
+
+---
+
+## 4. Add a New SSR Page
+
+Let's add a `/user/:username` page that fetches fresh data on every request.
+
+### Step 4a: Create the page component
+
+Create `packages/frontend/src/pages/User.jsx`:
+
+```jsx
+import { useLoaderData } from "../context/LoaderDataContext";
+import { Link } from "react-router-dom";
+
+export default function User() {
+  const data = useLoaderData();
+
+  if (!data) return <p>Loading...</p>;
+
+  return (
+    <div className="page">
+      <Link to="/">← Home</Link>
+      <h1>{data.name}</h1>
+      <p>Email: {data.email}</p>
+      <p>Company: {data.company?.name}</p>
+    </div>
+  );
+}
+```
+
+### Step 4b: Register in `App.jsx`
+
+```diff
++import User from "./pages/User";
+
+export default function App() {
+  return (
+    ...
+        <Routes>
+          // ...existing routes...
++         <Route path="/user/:username" element={<User />} />
+        </Routes>
+    ...
+```
+
+### Step 4c: Add the SSR route config
+
+In `renderingConfig.js`, add to `ssrRoutes`:
+
+```diff
+ export const ssrRoutes = [
+   {
+     path: "/post/:id",
+     loader: async ({ params }) => { ... },
+   },
++  {
++    path: "/user/:username",
++    loader: async ({ params }) => {
++      const res = await fetch(
++        `https://jsonplaceholder.typicode.com/users?username=${params.username}`
++      );
++      const users = await res.json();
++      if (users.length === 0) throw new Error("User not found");
++      return users[0];
++    },
++  },
+ ];
+```
+
+### Step 4d: Test it
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:5173/user/Bret`. The user data should be visible in the page source.
+
+---
+
+## 5. Build for Production
+
+```bash
+# Build client & server bundles, then pre-render SSG routes
+npm run build
+
+# Start the production server
+npm run start
+```
+
+Visit `http://localhost:5173`:
+- SSG routes (home, about, contact) → served from pre-built HTML files
+- SSR routes (post, user) → rendered on every request with fresh data
+
+---
+
+## 6. Using Query Parameters in Loaders
+
+Loaders receive `query` as the second parameter property:
+
+```js
+{
+  path: "/search",
+  loader: async ({ query }) => {
+    const res = await fetch(`https://api.example.com/search?q=${query.q}`);
+    return res.json();
+  },
+}
+```
+
+Visit `/search?q=hello` and the loader will have `query.q === "hello"`.
+
+---
+
+## Summary
+
+| What you want | Where to configure |
+| --- | --- |
+| Add a new page component | `src/pages/YourPage.jsx` |
+| Register the route | `src/App.jsx` `<Routes>` block |
+| Make it SSG with data | Add to `ssgRoutes` in `renderingConfig.js` |
+| Make it SSR with data | Add to `ssrRoutes` in `renderingConfig.js` |
+| Access loader data | `useLoaderData()` hook |

@@ -47,7 +47,6 @@ my-app/
 │   │       ├── entry-client.jsx
 │   │       ├── entry-server.jsx
 │   │       ├── App.jsx
-│   │       ├── router.jsx
 │   │       ├── context/
 │   │       │   └── LoaderDataContext.jsx
 │   │       └── pages/
@@ -66,12 +65,11 @@ Run all scripts from the **monorepo root** (`my-app/`):
 
 | Script | Description |
 | --- | --- |
-| `npm run dev` | Start both backend & frontend in CSR mode (fastest for development) |
-| `npm run frontend` | Start only the frontend dev server (CSR, Vite HMR) |
+| `npm run dev` | Start the SSR frontend and the backend API on concurrent ports |
+| `npm run frontend` | Start only the frontend SSR dev server (`node server`) |
 | `npm run backend` | Start only the backend API server |
-| `npm run optimized-frontend-dev` | Start frontend with **SSR + HMR** (loaders run server-side) |
-| `npm run optimized-frontend-prod` | Start frontend in **production SSR mode** (pre-rendered SSG pages served from disk) |
-| `npm run build` | Build the frontend for production + pre-render SSG routes |
+| `npm run start` | Start the frontend in **production SSR mode** (pre-rendered SSG pages served from disk) |
+| `npm run build` | Build the frontend for production + pre-render SSG routes (automatically triggered) |
 
 ## Quick Start: How it Works
 
@@ -128,7 +126,7 @@ export default function Post() {
 npm run build
 
 # 2. Start the production SSR server
-npm run optimized-frontend-prod
+npm run start
 
 # 3. Start the API server
 npm run backend

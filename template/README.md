@@ -1,66 +1,143 @@
-# Start Simple JS
+<div align="center">
+<br/><br/>
+<img alt="start-simple-logo" src="https://raw.githubusercontent.com/arnav-kushesh/start-simple/master/assets/pot.png" height="128"/>
+<h3 style="margin-top: 9px;">StartSimple.js</h3>
 
-A robust, minimal, full-stack monorepo template with built-in support for Server-Side Rendering (SSR) and Static Site Generation (SSG) in React 19 and Vite 7. 
+<br/>
 
-## What is this?
+[![NPM Version](https://img.shields.io/npm/v/start-simple?style=for-the-badge&labelColor=black&color=blue)](https://www.npmjs.com/package/start-simple)
+![NPM License](https://img.shields.io/npm/l/start-simple?style=for-the-badge&labelColor=black&color=blue) ![Static Badge](https://img.shields.io/badge/DISCORD-JOIN-blue?style=for-the-badge&logo=discord&labelColor=black&color=%235965f2&link=https%3A%2F%2Fdiscord.com%2Finvite%2F3XzqKYdchP)
 
-Start Simple JS provides a clean starting point for React applications that need high-performance SEO-friendly rendering without the complexity of heavy meta-frameworks like Next.js or Remix. 
+</div>
 
-It handles dual-mode rendering (SSR and SSG) gracefully while allowing you to write standard React code. 
+<br/>
 
-### Key Features
-- **Route-based Rendering Config**: Granularly define which routes are SSG (rendered at build time) and which are SSR (rendered dynamically per request).
-- **Data Loaders**: Fetch data seamlessly on the server or at build time, securely injecting it into the React tree during hydration.
-- **No Dual React Instances**: Avoids common Vite SSR traps by keeping the server rendering and hydration pathways completely independent cleanly.
-- **Fast Vite HMR**: Enjoy incredibly fast Hot Module Replacement during development, even alongside SSR workflows.
+## What is Start Simple?
 
-## Quick Start
+A minimal full-stack monorepo with **out-of-the-box SSR, SSG, and routing** — powered by Vite, React, and Express. No rewrites needed. Just configure your routes and loaders.
 
-### 1. Install Dependencies
-Navigate into the `template` directory and install all packages:
+## Why Start Simple?
+
+- **Zero learning curve** — if you know React and Express, you're ready.
+- **No frontend rewrites** — your existing React code works as-is.
+- **Route-based rendering** — declare which routes are SSR or SSG in one config file.
+- **Loaders** — each route can fetch its own data server-side, just like Remix/Next.js.
+- **Works with any frontend** — swap React for Vue/Svelte and the SSR pipeline still works.
+
+## Installation
+
 ```bash
-cd template
+npx start-simple my-app
+cd my-app
 npm install
-```
-
-### 2. Start the Development Server
-This runs the frontend in SSR mode with Vite HMR enabled. Modifying components will hot-reload while still fetching initial loader data safely via the server.
-```bash
 npm run dev
 ```
-
-### 3. Production Build & Start
-Generate the client/server bundles, run the SSG pre-renderer to output static files, and start the production Express server:
-```bash
-npm run build
-npm run prerender
-npm run start
-```
-*Note: In production, SSG routes are served extremely fast as static `.html` files, bypassing the React rendering engine entirely.*
 
 ## Project Structure
 
 ```
-template/
+my-app/
 ├── packages/
-│   ├── frontend/
-│   │   ├── dist/                 # Production output (client/server bundles)
-│   │   ├── src/                  # React source code (pages, components, entry points)
+│   ├── frontend/              # Vite + React SSR app
+│   │   ├── renderingConfig.js # ✨ SSG & SSR route definitions + loaders
+│   │   ├── server.js          # Express SSR server (dev & prod)
 │   │   ├── scripts/
-│   │   │   └── prerender.js      # Build-time script to generate SSG HTML 
-│   │   ├── renderingConfig.js    # Defines SSR vs SSG routes & data loaders
-│   │   ├── server.js             # Express server for SSR & SSG fallback
-│   │   ├── vite.config.js        # Vite configuration
-│   │   └── index.html            # Main HTML template 
-│   └── backend/                  # (Placeholder for future backend packages)
-├── turbo.json                    # TurboRepo configuration
-└── package.json                  # Root monorepo workspace package 
+│   │   │   └── prerender.js   # Build-time SSG pre-renderer
+│   │   └── src/
+│   │       ├── entry-client.jsx
+│   │       ├── entry-server.jsx
+│   │       ├── App.jsx
+│   │       ├── context/
+│   │       │   └── LoaderDataContext.jsx
+│   │       └── pages/
+│   │           ├── Home.jsx
+│   │           ├── About.jsx
+│   │           └── Post.jsx
+│   └── backend/               # Express API server
+│       └── index.js
+├── package.json               # Monorepo root (npm workspaces + Turbo)
+└── turbo.json
 ```
 
-## Learn More
+## Available Scripts
 
-Check out the detailed documentation documents below to master this architecture:
+Run all scripts from the **monorepo root** (`my-app/`):
 
-1. **[Tutorial](./tutorial.md)**: A step-by-step guide to adding new pages, routes, and data loaders.
-2. **[Documentation Reference](./documentation.md)**: Comprehensive API docs for the `renderingConfig.js` and `LoaderDataContext`.
-3. **[Under the Hood: The Mechanism](./mechanism.md)**: A deep-dive into how the custom SSR/SSG pipeline works without typical React Router hydration errors.
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Start the SSR frontend and the backend API on concurrent ports |
+| `npm run frontend` | Start only the frontend SSR dev server (`node server`) |
+| `npm run backend` | Start only the backend API server |
+| `npm run start` | Start the frontend in **production SSR mode** (pre-rendered SSG pages served from disk) |
+| `npm run build` | Build the frontend for production + pre-render SSG routes (automatically triggered) |
+
+## Quick Start: How it Works
+
+### 1. Define routes in `renderingConfig.js`
+
+```js
+export const ssgRoutes = [
+  {
+    path: "/",
+    loader: async () => ({ title: "Home" }),
+  },
+];
+
+export const ssrRoutes = [
+  {
+    path: "/post/:id",
+    loader: async ({ params }) => {
+      const res = await fetch(`https://api.example.com/posts/${params.id}`);
+      return res.json();
+    },
+  },
+];
+```
+
+### 2. Use loader data in your component
+
+```jsx
+import { useLoaderData } from "./context/LoaderDataContext";
+
+export default function Post() {
+  const data = useLoaderData();
+  return <h1>{data.title}</h1>;
+}
+```
+
+### 3. That's it!
+
+- **SSR routes** — loader runs on the server for every request.
+- **SSG routes** — loader runs at build time, HTML is saved to disk.
+- **Unlisted routes** — treated as SSG by default (client-side only in dev).
+
+## Rendering Modes
+
+| Mode | When Loader Runs | Best For |
+| --- | --- | --- |
+| **SSG** | Once at build time | Static pages (home, about, blog index) |
+| **SSR** | Every request | Dynamic pages (user profiles, posts, search results) |
+| **Default** (unlisted) | Client-side only | Pages without data needs |
+
+## Deployment
+
+```bash
+# 1. Build everything
+npm run build
+
+# 2. Start the production SSR server
+npm run start
+
+# 3. Start the API server
+npm run backend
+```
+
+## Further Reading
+
+- [**documentation.md**](./documentation.md) — Full API reference
+- [**tutorial.md**](./tutorial.md) — Step-by-step guide to adding routes
+- [**mechanism.md**](./mechanism.md) — Deep dive into how SSR/SSG works internally
+
+## License
+
+MIT

@@ -56,9 +56,9 @@ export default function Contact() {
 }
 ```
 
-### Step 3b: Register the route in `router.jsx`
+### Step 3b: Register the route in `App.jsx`
 
-Open `packages/frontend/src/router.jsx` and add:
+Open `packages/frontend/src/App.jsx` and add the `<Route>`:
 
 ```diff
  import Home from "./pages/Home";
@@ -66,12 +66,16 @@ Open `packages/frontend/src/router.jsx` and add:
  import Post from "./pages/Post";
 +import Contact from "./pages/Contact";
 
- const routes = [
-   { path: "/", element: <Home /> },
-   { path: "/about", element: <About /> },
-   { path: "/post/:id", element: <Post /> },
-+  { path: "/contact", element: <Contact /> },
- ];
+export default function App() {
+  return (
+    ...
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/post/:id" element={<Post />} />
++         <Route path="/contact" element={<Contact />} />
+        </Routes>
+    ...
 ```
 
 ### Step 3c: Add the SSG route config
@@ -101,7 +105,7 @@ Open `packages/frontend/renderingConfig.js` and add to `ssgRoutes`:
 ### Step 3d: Test it
 
 ```bash
-npm run optimized-frontend-dev
+npm run dev
 ```
 
 Visit `http://localhost:5173/contact`. View the page source — the HTML should include the title and email, proving it was server-rendered.
@@ -136,15 +140,19 @@ export default function User() {
 }
 ```
 
-### Step 4b: Register in `router.jsx`
+### Step 4b: Register in `App.jsx`
 
 ```diff
 +import User from "./pages/User";
 
- const routes = [
-   // ...existing routes...
-+  { path: "/user/:username", element: <User /> },
- ];
+export default function App() {
+  return (
+    ...
+        <Routes>
+          // ...existing routes...
++         <Route path="/user/:username" element={<User />} />
+        </Routes>
+    ...
 ```
 
 ### Step 4c: Add the SSR route config
@@ -174,7 +182,7 @@ In `renderingConfig.js`, add to `ssrRoutes`:
 ### Step 4d: Test it
 
 ```bash
-npm run optimized-frontend-dev
+npm run dev
 ```
 
 Visit `http://localhost:5173/user/Bret`. The user data should be visible in the page source.
@@ -188,7 +196,7 @@ Visit `http://localhost:5173/user/Bret`. The user data should be visible in the 
 npm run build
 
 # Start the production server
-npm run optimized-frontend-prod
+npm run start
 ```
 
 Visit `http://localhost:5173`:
@@ -220,7 +228,7 @@ Visit `/search?q=hello` and the loader will have `query.q === "hello"`.
 | What you want | Where to configure |
 | --- | --- |
 | Add a new page component | `src/pages/YourPage.jsx` |
-| Register the route | `src/router.jsx` |
+| Register the route | `src/App.jsx` `<Routes>` block |
 | Make it SSG with data | Add to `ssgRoutes` in `renderingConfig.js` |
 | Make it SSR with data | Add to `ssrRoutes` in `renderingConfig.js` |
 | Access loader data | `useLoaderData()` hook |

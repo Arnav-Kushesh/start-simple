@@ -1,23 +1,44 @@
-# Documentation Reference
+# Documentation — Start Simple
 
-This document provides a detailed API reference for the Start Simple JS frontend architecture.
+Complete API reference for the Start Simple SSR/SSG framework.
 
-## `renderingConfig.js`
-The heart of the SSR/SSG engine. This file defines which pages are statically generated at build-time (SSG) and which are rendered on the server dynamically during runtime (SSR).
+---
 
-Any route *not* listed in this file will default to an SSG route with no `loader`.
+## Table of Contents
 
-### Example Format
+- [renderingConfig.js](#renderingconfigjs)
+- [Loader API](#loader-api)
+- [LoaderDataContext](#loaderdatacontext)
+- [Server Behavior](#server-behavior)
+- [Build Pipeline](#build-pipeline)
+- [Environment Variables](#environment-variables)
+
+---
+
+## renderingConfig.js
+
+The central configuration file located at `packages/frontend/renderingConfig.js`. It exports two arrays:
+
+### `ssgRoutes`
+
+Routes that are **statically generated at build time**. The loader runs once during `npm run build`, and the resulting HTML is saved to `dist/client/`.
+
 ```js
 export const ssgRoutes = [
   {
-    path: "/about",
+    path: "/",
     loader: async ({ params, query }) => {
-      return { title: "About Us" };
+      return { title: "Home Page" };
     },
   },
 ];
+```
 
+### `ssrRoutes`
+
+Routes that are **server-side rendered on every request**. The loader runs on the server each time a user visits the page.
+
+```js
 export const ssrRoutes = [
   {
     path: "/post/:id",
@@ -29,48 +50,176 @@ export const ssrRoutes = [
 ];
 ```
 
-### Route Types 
-- `ssgRoutes`: Routes exported in this array will be processed by `prerender.js` during the build phase. The result is pure, static `.html` files output in the `dist/client/` directory.
-- `ssrRoutes`: Routes exported here are ignored during build. Instead, when a request hits `server.js`, their loader executes in real-time, the React tree renders, and the full HTML is sent back.
+### Default Behavior
 
-### Loaders
-Loaders run EXCLUSIVELY on the server (either during the Vite build phase for SSG, or inside the Express server for SSR). They receive an object with:
-- `params`: Extracted path variables (e.g., `{ id: "1" }` for `/post/:id`).
-- `query`: The URL query string parameters.
+Any route **not listed** in either `ssgRoutes` or `ssrRoutes` is treated as SSG by default. In development, it renders client-side. In production, if a pre-rendered HTML file exists in `dist/client/`, it is served.
 
-Returns JSON serializable data. **Do not return functions, classes, or cyclic structures.** This data is serialized and embedded into the HTML in a `<script>` tag during rendering.
+---
 
-## `LoaderDataContext`
+## Loader API
 
-This context provides access to the serialized data returned by your loaders inside your React components.
+Every route (SSG or SSR) can have a `loader` function.
 
-### `useLoaderData()` Hook
-Call this hook from any component rendered within a route's view tree to access the data returned from that route's loader.
+### Signature
+
+```js
+async function loader({ params, query }) {
+  // params: URL path parameters (e.g., { id: "42" } for /post/:id)
+  // query: URL query parameters (e.g., { page: "2" } for ?page=2)
+  return data; // Any serializable value
+}
+```
+
+### Parameters
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `params` | `Object` | Path parameters extracted from the URL pattern |
+| `query` | `Object` | Query string parameters from the URL |
+
+### Return Value
+
+The loader must return a **JSON-serializable** value. This value is:
+1. Serialized to JSON
+2. Injected into the HTML as `window.__LOADER_DATA__`
+3. Available in components via `useLoaderData()`
+
+### Error Handling
+
+If a loader throws an error, the server responds with a 500 status and the error stack trace (in development) or a generic error (in production).
+
+---
+
+## LoaderDataContext
+
+Located at `src/context/LoaderDataContext.jsx`. Provides two exports:
+
+### `LoaderDataProvider`
+
+A React context provider that wraps your app and supplies loader data.
 
 ```jsx
-import { useLoaderData } from "../context/LoaderDataContext";
+<BrowserRouter>
+  <LoaderDataProvider data={loaderData}>
+    <App />
+  </LoaderDataProvider>
+</BrowserRouter>
+```
 
-export default function Post() {
+### Client-Side Navigation
+
+After the initial page load, navigation is handled frictionlessly on the client by React Router `v6`. When a user clicks a `<Link>` component:
+
+1. The URL updates without triggering a hard browser reload.
+2. `LoaderDataContext` observes the `useLocation()` mutation and triggers a `useEffect`.
+3. The component drops into a `<Suspense>` / loading state.
+4. The requested route's `loader` function executes directly on the client, fetching JSON data from the API endpoint.
+5. The data context is updated, and the new route renders cleanly without causing React to drop its mounted DOM state.
+
+> **Note:** Because subsequent navigations trigger `renderingConfig.js` loaders fully on the client side, ensure your route configuration loaders are capable of reaching the data via an API endpoint.
+
+---
+
+### `useLoaderData()`
+
+A hook to access the current route's loader data inside any component.
+
+```jsx
+import { useLoaderData } from "./context/LoaderDataContext";
+
+export default function MyPage() {
   const data = useLoaderData();
-
-  if (!data) return <p>Loading...</p>
-
   return <h1>{data.title}</h1>;
 }
 ```
 
-## `App` Layout Wrapper
-To eliminate mismatched "dual React instances" caused by external libraries like modern Server-React-Routers, this architecture avoids native router wrapping.
+Returns `null` if no loader data is available (e.g., for routes without loaders).
 
-Instead, the `App.jsx` simply acts as a standard component providing the application shell (e.g. Navigation Headers, Footers) and renders `children`. Both `entry-client.jsx` and `entry-server.jsx` wrap dynamic `<PageComponents />` in the `<App>` layout.
+---
 
-## Server (`server.js`)
-The `server.js` acts as an Express adapter wrapping Vite. 
+## Server Behavior
 
-**Development Mode (`NODE_ENV=development`)**
-- Instantiates Vite in middleware mode to provide flawless Hot Module Replacement (HMR).
-- Runs SSR route mapping for all dynamic requests.
+The Express server (`server.js`) handles all routes through a unified pipeline:
 
-**Production Mode (`NODE_ENV=production`)**
-- Serves SSG routes via `sirv` directly from the filesystem for blazing fast loads.
-- Handles dynamic paths by rendering the output through the compiled React server-entry file and injecting loader payload JSON.
+### Request Flow
+
+```
+Request → Match SSR route? → Yes → Run loader → SSR render → Send HTML
+                           → No  → Match SSG route?
+                                    → Yes → (Prod) Serve pre-rendered HTML
+                                          → (Dev) Run loader → SSR render → Send HTML
+                                    → No  → Render without loader data → Send HTML
+```
+
+### Development Mode (`optimized-frontend-dev`)
+
+- Vite dev server runs in middleware mode
+- HMR (Hot Module Replacement) is active
+- `renderingConfig.js` is hot-reloaded on every request
+- All routes are server-rendered live (no pre-rendered files)
+
+### Production Mode (`optimized-frontend-prod`)
+
+- Static assets served via `sirv` with compression
+- SSG routes: pre-rendered HTML files served from `dist/client/`
+- SSR routes: loader runs and page renders on every request
+
+### Data Injection
+
+Loader data is serialized and injected into the HTML head:
+
+```html
+<script>window.__LOADER_DATA__ = {"title":"Home"};</script>
+```
+
+The `<` character is escaped as `\u003c` to prevent XSS via script injection.
+
+---
+
+## Build Pipeline
+
+### `npm run build`
+
+Runs two Vite builds sequentially:
+
+1. **Client build** (`vite build --outDir dist/client`)  
+   Produces the browser bundle, CSS, and `index.html`.
+
+2. **Server build** (`vite build --ssr src/entry-server.jsx --outDir dist/server`)  
+   Produces the Node.js SSR bundle.
+
+### `npm run prerender` (runs automatically after build)
+
+Executes `scripts/prerender.js`:
+
+1. Imports `renderingConfig.js` to read all SSG routes
+2. For each SSG route:
+   - Runs the loader with `{ params: {}, query: {} }`
+   - Renders the page to an HTML string via `entry-server.js`
+   - Injects the `__LOADER_DATA__` script tag
+   - Writes the HTML file to `dist/client/<route>.html`
+
+---
+
+## Environment Variables
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `NODE_ENV` | `undefined` | Set to `production` for production mode |
+| `PORT` | `5173` | Server port |
+| `BASE` | `/` | Base URL path for the app |
+
+---
+
+## File Reference
+
+| File | Purpose |
+| --- | --- |
+| `renderingConfig.js` | Route definitions with loaders |
+| `server.js` | Express SSR server |
+| `src/entry-client.jsx` | Client-side hydration entry |
+| `src/entry-server.jsx` | Server-side render function |
+| `src/App.jsx` | Root React component with `<Routes>` definitions |
+| `src/context/LoaderDataContext.jsx` | Data context + `useLoaderData` hook |
+| `scripts/prerender.js` | Build-time SSG pre-renderer |
+| `index.html` | HTML template with `<!--app-html-->` placeholder |

@@ -42,11 +42,13 @@ A deep dive into the internal architecture of Start Simple's rendering pipeline.
 │  ┌──────────────────────────────────────────┐           │
 │  │         entry-server.jsx                 │           │
 │  │  renderToString(                         │           │
-│  │    <StaticRouter>                        │           │
-│  │      <LoaderDataProvider data={...}>     │           │
-│  │        <App />                           │           │
-│  │      </LoaderDataProvider>               │           │
-│  │    </StaticRouter>                       │           │
+│  │    <StrictMode>                          │           │
+│  │      <StaticRouter location={url}>       │           │
+│  │        <LoaderDataProvider data={...}>   │           │
+│  │          <App />                         │           │
+│  │        </LoaderDataProvider>             │           │
+│  │      </StaticRouter>                     │           │
+│  │    </StrictMode>                         │           │
 │  │  )                                       │           │
 │  └──────────────────────────────────────────┘           │
 └─────────────────────────────────────────────────────────┘
@@ -202,9 +204,15 @@ Solutions:
 
 ### Client-Side Navigation
 
-After the initial page load, navigation is handled entirely on the client by React Router. The `LoaderDataProvider` data persists for the initial page but is not automatically fetched for client-navigated pages.
+After the initial page load, navigation is handled frictionlessly on the client by React Router `v6`. When a user clicks a `<Link>` component:
 
-> **Note:** For subsequent navigations, components should fetch their own data client-side (e.g., via `useEffect`), or you can enhance the router to call loaders on client navigation.
+1. The URL updates without triggering a hard browser reload.
+2. `LoaderDataContext` observes the `useLocation()` mutation and triggers a `useEffect`.
+3. The component drops into a `<Suspense>` / loading state.
+4. The requested route's `loader` function executes directly on the client, fetching JSON data from the API endpoint.
+5. The data context is updated, and the new route renders cleanly without causing React to drop its mounted DOM state.
+
+> **Note:** Because subsequent navigations trigger `renderingConfig.js` loaders fully on the client side, ensure your route configuration loaders are capable of reaching the data via an API endpoint.
 
 ---
 
