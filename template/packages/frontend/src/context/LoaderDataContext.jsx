@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useLocation, matchPath } from "react-router-dom";
 import { ssgRoutes, ssrRoutes } from "../../renderingConfig";
 
@@ -16,10 +16,12 @@ const allRoutes = [...ssgRoutes, ...ssrRoutes];
 export function LoaderDataProvider({ data: initialData, initialPath, children }) {
     const [data, setData] = useState(initialData);
     const location = useLocation();
+    const isInitialLoad = React.useRef(true);
 
     useEffect(() => {
-        // Skip fetching if this is the initial server-rendered path we just hydrated on
-        if (location.pathname === initialPath) {
+        // Skip fetching only on the very first mount (hydration)
+        if (isInitialLoad.current) {
+            isInitialLoad.current = false;
             return;
         }
 
@@ -61,7 +63,7 @@ export function LoaderDataProvider({ data: initialData, initialPath, children })
         return () => {
             isMounted = false;
         };
-    }, [location.pathname, location.search, initialPath]);
+    }, [location.pathname, location.search]);
 
     return (
         <LoaderDataContext.Provider value={data}>

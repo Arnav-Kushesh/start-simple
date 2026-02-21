@@ -14,7 +14,7 @@ const container = document.getElementById("root");
 const AppTree = (
   <StrictMode>
     <BrowserRouter>
-      <LoaderDataProvider data={loaderData} initialPath={initialPath}>
+      <LoaderDataProvider data={loaderData}>
         <App />
       </LoaderDataProvider>
     </BrowserRouter>

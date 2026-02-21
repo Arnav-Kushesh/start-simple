@@ -20,7 +20,7 @@ export function render(url, loaderData) {
   const html = renderToString(
     <StrictMode>
       <StaticRouter location={url}>
-        <LoaderDataProvider data={loaderData} initialPath={pathname}>
+        <LoaderDataProvider data={loaderData}>
           <App />
         </LoaderDataProvider>
       </StaticRouter>
