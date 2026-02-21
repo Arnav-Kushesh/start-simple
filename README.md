@@ -12,278 +12,134 @@
 
 <br/>
 
-### What is "Start Simple"
+## What is Start Simple?
 
-A minimal full-stack setup with out-of-the-box support for SSR, SSG, and sitemap generation.
+A minimal full-stack monorepo with **out-of-the-box SSR, SSG, and routing** — powered by Vite, React, and Express. No rewrites needed. Just configure your routes and loaders.
 
-### Why this project was created
+## Why Start Simple?
 
-We wanted to create a way to add SSR & SSG features with minimal code changes on the frontend
-
-### Installation
-
-`npx start-simple`
-
-### How Static Site Generation Works?
-
-- Basically static site generation is done through Puppeteer at build time
-- The advantage of this method is that the frontend code requires little to no change to support static generation
-- All you need to do is mention all the static routes in `/optimized-frontend/config.js`
-- At build time, static routes are saved on the server in rendered form
-- When a user or bot tries to access that route, the saved result is served, improving SEO & performance
-- Bots can easily crawl the page without needing to execute JS
-- Browsers can instantly show UI without needing to do CSR to show the initial UI
-- For saving the rendered static routes Puppeteer is used, Puppeteer only runs at build time. So, there is no impact on performance
-- We call this method: Scrapping based SSG & SSR
-- If UI on the static page relies on api requests then that data also needed to be saved at build time for SSG to work
-  - To ensure that this data is not loaded again by JS use the following setup
-  - After making the api requests you only need to do `window.EXPORT_STATIC_PAGE_DATA = data `
-  - Then this data will be saved at build time using Puppeteer
-  - After that you can use this saved data on the client side ensuring the same UI is rendered
-
-  ```js
-  let preLoadedData = window.getPreLoadedData && window.getPreLoadedData();
-  ```
-
-  - The `getPreLoadedData` function is injected by the server, you don't need to import any library to use it
-  - `getPreLoadedData` checks the page path and then provides the data you assigned to `window.EXPORT_STATIC_PAGE_DATA`
-  - hydration might break if non-deterministic logic is being used like Math.random, in that case you can restrict SSG to `BOT_ONLY` by passing the config `staticRendering:BOT_ONLY` in `/optimized-frontend/config.js`
-
-### How Server Side Rendering Works?
-
-- Let's say you have post pages. In that case static generation isn't practical because you might have thousands or millions of post pages
-- We will have to do server side rendering for this
-- You will have to provide list of dynamic routes with a loader function and a template in `/optimized-frontend/config.js`
-- For providing the template you need to create a route in the frontend that serves the template.
-- For example template can be served at /post-page-template, you can use handlebar syntax inside your react / vue component
-- Make sure it is the same component structure that serves post pages
-- Once the post-page-template has been saved on the server, users & bots will be prevented from visiting that route
-- Data extracted from the loader function will be injected in /post-page-template to serve users when they visit /post/123 page
-- The component itself it being used for templating. So hydration won't be an issue
-- hydration might break if non-deterministic logic is being used like Math.random, in that case you can restrict SSR to `BOT_ONLY` by passing the config `dynamicRendering:BOT_ONLY` in `/optimized-frontend/config.js`
-- The data loaded from the loader function can be accessed by using the following logic
-
-```js
-let preLoadedData = window.getPreLoadedData && window.getPreLoadedData();
-```
-
-### Limitations
-
-- For now we would recommend that SSR is done with BOT_ONLY mode
-- because syncing template with react component might not be possible for complex pages
-- We recommend that you write a template route that returns handlebar template, this does not need to be inline with the dynamic route as it will only be served to the bots
-- Also, this is an evolving tool which is in very early stages.
-- Limitations only exists for SSR. In case of SSG, there aren't such limitations.
-
-### Use Cases
-
-### Add SSR to a capacitor project
-
-- Capacitor requires a clean build folder to function, but in frameworks like Next.js & Tanstack backend and frontend codebase is very closely integrated
-- Capacitor can only run frontend code.
-- So it takes significant workarounds to make Next.js / Tanstack work with Capacitor without compromising on SSR
-- With scrapping based SSG & SSR, the capacitor project requires very minimal changes
-
-### Huge codebase
-
-- If you have a big project, rewriting it in Remix / Next.js / Tanstack might not be economical in some cases
-- With our implementation frontend code requires very minimal changes
-
-## Benefits
-
-- Minimal learning curve - You only require knowledge of react & express
-- Minimal need to change frontend code - Frontend is a standard react app
-- Works with any frontend technology - You can replace the frontend folder with any other technology and it will still work
-
-# Getting started
+- **Zero learning curve** — if you know React and Express, you're ready.
+- **No frontend rewrites** — your existing React code works as-is.
+- **Route-based rendering** — declare which routes are SSR or SSG in one config file.
+- **Loaders** — each route can fetch its own data server-side, just like Remix/Next.js.
+- **Works with any frontend** — swap React for Vue/Svelte and the SSR pipeline still works.
 
 ## Installation
 
-`npx start-simple`
+```bash
+npx start-simple my-app
+cd my-app
+npm install
+npm run dev
+```
 
-## Configure
+## Project Structure
 
-Inside of `/optimized-frontend/config.js` you can mention the static and dynamic routes
+```
+my-app/
+├── packages/
+│   ├── frontend/              # Vite + React SSR app
+│   │   ├── renderingConfig.js # ✨ SSG & SSR route definitions + loaders
+│   │   ├── server.js          # Express SSR server (dev & prod)
+│   │   ├── scripts/
+│   │   │   └── prerender.js   # Build-time SSG pre-renderer
+│   │   └── src/
+│   │       ├── entry-client.jsx
+│   │       ├── entry-server.jsx
+│   │       ├── App.jsx
+│   │       ├── router.jsx
+│   │       ├── context/
+│   │       │   └── LoaderDataContext.jsx
+│   │       └── pages/
+│   │           ├── Home.jsx
+│   │           ├── About.jsx
+│   │           └── Post.jsx
+│   └── backend/               # Express API server
+│       └── index.js
+├── package.json               # Monorepo root (npm workspaces + Turbo)
+└── turbo.json
+```
+
+## Available Scripts
+
+Run all scripts from the **monorepo root** (`my-app/`):
+
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Start both backend & frontend in CSR mode (fastest for development) |
+| `npm run frontend` | Start only the frontend dev server (CSR, Vite HMR) |
+| `npm run backend` | Start only the backend API server |
+| `npm run optimized-frontend-dev` | Start frontend with **SSR + HMR** (loaders run server-side) |
+| `npm run optimized-frontend-prod` | Start frontend in **production SSR mode** (pre-rendered SSG pages served from disk) |
+| `npm run build` | Build the frontend for production + pre-render SSG routes |
+
+## Quick Start: How it Works
+
+### 1. Define routes in `renderingConfig.js`
 
 ```js
-// Define your routes here
-const staticRoutes = [
-  "/",
-  // Add other static routes here, e.g., '/about', '/contact'
+export const ssgRoutes = [
+  {
+    path: "/",
+    loader: async () => ({ title: "Home" }),
+  },
 ];
 
-// Start the SSR service
-let config = {
-  buildFolder: buildDir,
-  staticRoutes,
-  dynamicRoutes: [
-    {
-      path: "/post/:id",
-      templateRoute: "/post-page-template",
-      loader: async ({ params }) => {
-        // Fetch data based on params.id
-        // const res = await fetch(`https://api.example.com/posts/${params.id}`);
-        // return res.json();
-
-        let res = await fetch(
-          "https://jsonplaceholder.typicode.com/posts/" + params.id,
-        );
-
-        let data = await res.json();
-
-        return data;
-      },
-      sitemapGenerator: async () => {
-        return {
-          uniqueName: "posts",
-          total: 100000,
-          loader: async ({ limit, itemsToSkip }) => {
-            // In a real app, this would fetch from database
-            // mocking functionality for now
-            let items = [];
-            for (let i = 0; i < limit; i++) {
-              items.push({
-                url: `/post/${itemsToSkip + i}`,
-                lastUpdatedAt: new Date().toISOString(),
-              });
-            }
-            return items;
-          },
-        };
-      },
-    },
-  ],
-  port: PORT,
-  prerenderingPort: PRERENDER_PORT,
-  dynamicRendering: "ALL_REQUESTS", // or 'BOT_ONLY'
-  domain: "https://example.com",
-};
-
-export default config;
-```
-
-## Development
-
-- `npm run dev` Starts the backend & frontend server using TurboRepo - SSR & SSG is disabled in this case
-- `npm run build` Builds the frontend and does the pre-rendering
-- `npm run optimized-frontend` Frontend is started with SSR & SSG
-
-## How to do deployment
-
-- `npm run backend` - For backend deployment
-- `npm run build` - For generating dist folder & doing pre-rendering
-- `npm run optimized-frontend` - For frontend deployment that supports SSG & SSR
-- Before running `npm run optimized-frontend` you first need to run the build command so that pre-rendering can happen
-
-## If you end up replacing the frontend folder do remember to enable hydration using the following code if you are using react
-
-```js
-import React from "react";
-import { createRoot, hydrateRoot } from "react-dom/client";
-import App from "./App.jsx";
-import "./index.css";
-import { BrowserRouter } from "react-router-dom";
-
-let container = document.getElementById("root");
-
-let Component = (
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
-);
-
-if (container.innerHTML.trim()) {
-  hydrateRoot(container, Component);
-} else {
-  createRoot(container).render(Component);
-}
-```
-
-## Precautions
-
-- If anchor tag with target="\_black" is used then ensure that it has the following attribute rel="noopener noreferrer"
-- If rel="noopener noreferrer" is not there then Puppeteer might add it for security reasons which can cause hydration issues
-- This is a theoretical issue, in practice this issue has not occurred
-
-# How to use sitemap generator
-
-To enable sitemap generation, you need to update your `config.js` file inside of `optimized-frontend` folder
-
-### 1. Add Domain
-
-Add the `domain` property to config object. This is used to construct absolute URLs in the sitemap.
-
-```js
-let config = {
-  // ... other config options
-  domain: "https://your-domain.com",
-};
-```
-
-### 2. Configure Dynamic Routes
-
-For each dynamic route that you want to include in the sitemap, add a `sitemapGenerator` function.
-
-The `sitemapGenerator` function should return an object with:
-
-- `uniqueName`: A unique string identifier for this route (e.g., "posts", "products").
-- `total`: The total number of items available for this route.
-- `loader`: A function that fetches list of urls for sitemap
-
-#### Loader Function
-
-The `loader` function receives an object with:
-
-- `limit`: The maximum number of items to return (default is 50,000).
-- `itemsToSkip`: The number of items to skip (for pagination).
-
-It should return an array of objects, each containing:
-
-- `url`: The relative or absolute URL of the page.
-- `lastUpdatedAt` (optional): ISO date string of when the page was last modified.
-
-### Example
-
-Here is a complete example of how to configure a dynamic route for blog posts:
-
-```js
-const dynamicRoutes = [
+export const ssrRoutes = [
   {
     path: "/post/:id",
-    templateRoute: "/post-page-template",
-    // ... normal loader for the page ...
-
-    // SITEMAP CONFIGURATION
-    sitemapGenerator: async () => {
-      // Fetch total count from your DB
-      const totalPosts = 100000;
-
-      return {
-        uniqueName: "post",
-        total: totalPosts,
-        loader: async ({ limit, itemsToSkip }) => {
-          // Fetch batch of posts from your DB
-          // const posts = await db.getPosts({ offset: itemsToSkip, limit });
-
-          // Map to sitemap format
-          return posts.map((post) => ({
-            url: `/post/${post.id}`,
-            lastUpdatedAt: post.updatedAt, // e.g. "2024-03-20T10:00:00Z"
-          }));
-        },
-      };
+    loader: async ({ params }) => {
+      const res = await fetch(`https://api.example.com/posts/${params.id}`);
+      return res.json();
     },
   },
 ];
 ```
 
-## Structure of the generated sitemap
+### 2. Use loader data in your component
 
-Once configured, the following endpoints will be available:
+```jsx
+import { useLoaderData } from "./context/LoaderDataContext";
 
-- `/sitemap.xml`: The main sitemap index. It lists the static routes sitemap and all dynamic route sitemaps.
-- `/sitemap-static.xml`: Contains all the static routes defined in your `staticRoutes` config.
-- `/sitemap-<uniqueName>.xml`: An index sitemap for a specific dynamic route (e.g., `/sitemap-post.xml`). It lists the paginated sub-sitemaps.
-- `/sitemap-<uniqueName>-<page>.xml`: The actual sitemap files containing the URLs (e.g., `/sitemap-post-1.xml`). Each file contains up to 50,000 URLs.
+export default function Post() {
+  const data = useLoaderData();
+  return <h1>{data.title}</h1>;
+}
+```
+
+### 3. That's it!
+
+- **SSR routes** — loader runs on the server for every request.
+- **SSG routes** — loader runs at build time, HTML is saved to disk.
+- **Unlisted routes** — treated as SSG by default (client-side only in dev).
+
+## Rendering Modes
+
+| Mode | When Loader Runs | Best For |
+| --- | --- | --- |
+| **SSG** | Once at build time | Static pages (home, about, blog index) |
+| **SSR** | Every request | Dynamic pages (user profiles, posts, search results) |
+| **Default** (unlisted) | Client-side only | Pages without data needs |
+
+## Deployment
+
+```bash
+# 1. Build everything
+npm run build
+
+# 2. Start the production SSR server
+npm run optimized-frontend-prod
+
+# 3. Start the API server
+npm run backend
+```
+
+## Further Reading
+
+- [**documentation.md**](./documentation.md) — Full API reference
+- [**tutorial.md**](./tutorial.md) — Step-by-step guide to adding routes
+- [**mechanism.md**](./mechanism.md) — Deep dive into how SSR/SSG works internally
+
+## License
+
+MIT

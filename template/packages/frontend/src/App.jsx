@@ -1,20 +1,27 @@
-import { Routes, Route } from "react-router-dom";
+import "./App.css";
 
-import HomePage from "./homePage/HomePage";
-import PostPage from "./postPage/PostPage";
-import PostPageTemplate from "./postPage/PostPageTemplate";
-import NotFound from "./NotFound";
-
-function App() {
+/**
+ * Main Application Layout.
+ * Shared between client and server entry points.
+ * Navigation uses native <a> tags for a multi-page app architecture
+ * providing robust SSR without dual React instance issues.
+ */
+export default function App({ children }) {
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/post/:id" element={<PostPage />} />
-      <Route path="/post-page-template" element={<PostPageTemplate />} />
-      <Route path="/404" element={<NotFound />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <div id="app">
+      <header className="app-header">
+        <nav>
+          <a href="/" className="nav-brand">
+            Start Simple
+          </a>
+          <div className="nav-links">
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/post/1">Post Example</a>
+          </div>
+        </nav>
+      </header>
+      <main>{children}</main>
+    </div>
   );
 }
-
-export default App;

@@ -9,8 +9,7 @@
     "dev": "turbo run dev",
     "backend": "turbo run dev --filter backend",
     "frontend": "turbo run dev --filter frontend",
-    "optimized-frontend": "turbo run start --filter optimized-frontend",
-    "console": "turbo run dev --filter ssr-console",
+    "start": "turbo run start --filter frontend",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
