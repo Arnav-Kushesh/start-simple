@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { renderToString } from "react-dom/server";
+import { StaticRouter } from "react-router-dom/server";
 import { LoaderDataProvider } from "./context/LoaderDataContext";
-import { matchRoute } from "./router";
 import App from "./App";
 import "./App.css";
 
@@ -16,16 +16,14 @@ import "./App.css";
  */
 export function render(url, loaderData) {
   const pathname = url.split("?")[0];
-  const route = matchRoute(pathname);
-  const PageComponent = route.Component;
 
   const html = renderToString(
     <StrictMode>
-      <LoaderDataProvider data={loaderData}>
-        <App>
-          <PageComponent />
-        </App>
-      </LoaderDataProvider>
+      <StaticRouter location={url}>
+        <LoaderDataProvider data={loaderData} initialPath={pathname}>
+          <App />
+        </LoaderDataProvider>
+      </StaticRouter>
     </StrictMode>,
   );
   return { html };

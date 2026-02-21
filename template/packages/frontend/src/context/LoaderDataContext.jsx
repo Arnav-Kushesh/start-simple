@@ -1,14 +1,68 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import { useLocation, matchPath } from "react-router-dom";
+import { ssgRoutes, ssrRoutes } from "../../renderingConfig";
 
 const LoaderDataContext = createContext(null);
 
+const allRoutes = [...ssgRoutes, ...ssrRoutes];
+
 /**
- * Provider that makes loader data available to all child components.
+ * Provider that smartly manages loader data.
  *
- * On the server: data is passed directly from the server's loader execution.
- * On the client: data is read from window.__LOADER_DATA__ injected by the server.
+ * On initial HTML load, it uses the server-injected `data`.
+ * On subsequent SPA navigations via React Router <Link>, it detects the URL change
+ * and fetches fresh data on the client by executing the route's .loader() function.
  */
-export function LoaderDataProvider({ data, children }) {
+export function LoaderDataProvider({ data: initialData, initialPath, children }) {
+    const [data, setData] = useState(initialData);
+    const location = useLocation();
+
+    useEffect(() => {
+        // Skip fetching if this is the initial server-rendered path we just hydrated on
+        if (location.pathname === initialPath) {
+            return;
+        }
+
+        let isMounted = true;
+
+        async function fetchClientData() {
+            // Find the matching route config to get its loader function
+            let matchedRoute = null;
+            let matchResult = null;
+
+            for (const route of allRoutes) {
+                const match = matchPath(route.path, location.pathname);
+                if (match) {
+                    matchedRoute = route;
+                    matchResult = match;
+                    break;
+                }
+            }
+
+            if (matchedRoute && matchedRoute.loader) {
+                // Clear existing data to trigger loading states in child components
+                setData(null);
+                try {
+                    // Execute the loader entirely on the client
+                    const payload = await matchedRoute.loader({
+                        params: matchResult.params || {},
+                        query: new URLSearchParams(location.search)
+                    });
+                    if (isMounted) setData(payload);
+                } catch (error) {
+                    console.error("Client-side loader error:", error);
+                    if (isMounted) setData(null);
+                }
+            }
+        }
+
+        fetchClientData();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [location.pathname, location.search, initialPath]);
+
     return (
         <LoaderDataContext.Provider value={data}>
             {children}
@@ -18,13 +72,10 @@ export function LoaderDataProvider({ data, children }) {
 
 /**
  * Hook to access loader data within a route component.
- *
- * Usage:
- *   const data = useLoaderData();
+ * Be sure to handle the `null` loading state gracefully in your component!
  */
 export function useLoaderData() {
-    const data = useContext(LoaderDataContext);
-    return data;
+    return useContext(LoaderDataContext);
 }
 
 export default LoaderDataContext;

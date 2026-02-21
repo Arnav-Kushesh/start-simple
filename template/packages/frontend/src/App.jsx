@@ -1,3 +1,5 @@
+import { Routes, Route, Link } from "react-router-dom";
+import routes from "./router";
 import "./App.css";
 
 /**
@@ -6,22 +8,32 @@ import "./App.css";
  * Navigation uses native <a> tags for a multi-page app architecture
  * providing robust SSR without dual React instance issues.
  */
-export default function App({ children }) {
+export default function App() {
   return (
     <div id="app">
       <header className="app-header">
         <nav>
-          <a href="/" className="nav-brand">
+          <Link to="/" className="nav-brand">
             Start Simple
-          </a>
+          </Link>
           <div className="nav-links">
-            <a href="/">Home</a>
-            <a href="/about">About</a>
-            <a href="/post/1">Post Example</a>
+            <Link to="/">Home</Link>
+            <Link to="/about">About</Link>
+            <Link to="/post/1">Post Example</Link>
           </div>
         </nav>
       </header>
-      <main>{children}</main>
+      <main>
+        <Routes>
+          {routes.map((route) => (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={<route.Component />}
+            />
+          ))}
+        </Routes>
+      </main>
     </div>
   );
 }

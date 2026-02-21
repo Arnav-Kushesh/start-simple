@@ -9,4 +9,7 @@ export default defineConfig({
     // Prevents dual React instance issues in monorepo setups
     dedupe: ['react', 'react-dom'],
   },
+  ssr: {
+    noExternal: ['react-router-dom']
+  }
 })

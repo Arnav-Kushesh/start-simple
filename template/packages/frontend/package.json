@@ -16,6 +16,7 @@
     "express": "^5.2.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-router-dom": "^6.30.3",
     "sirv": "^3.0.2"
   },
   "devDependencies": {

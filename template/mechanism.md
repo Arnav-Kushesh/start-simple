@@ -6,18 +6,14 @@ This leads to catastrophic hydration tracking bugs like:
 `Warning: Invalid hook call. Hooks can only be called inside of the body of a function component.` 
 Or an entirely blank viewport after hydration wipes the SSR'd HTML.
 
-## The Start Simple JS Fix
-We completely decoupled the routing from the monolithic client-framework approach.
+## The Hybrid Approach
+We carefully integrated standard React Router v6 components with a custom SSR data-loader pipeline to preserve performance and avoid CJS/ESM module resolution conflicts (the "Dual React Instance" error) that appear natively in Vite 7.
 
-### 1. Unified Clean URL Matcher
-Instead of passing components into a `<BrowserRouter><Routes>...</Routes></BrowserRouter>`, we use a custom lightweight route parsing utility function in `src/router.jsx`. This uses zero external React logic.
+### 1. Unified Route Data Matching
+Instead of letting React Router blindly handle data fetching asynchronously on the client, our Node server intercepts every page request. The server uses a custom `matchRoute` function in `src/router.jsx` to predetermine which page component corresponds to the URL, fetches the component's loader data (`renderingConfig.js`), and injects it securely into the HTML payload via `<script>window.__LOADER_DATA__</script>`.
 
-### 2. Manual Hydration
-The `entry-server.jsx` processes the request URL, identifies the matching nested `<PageComponent/>`, and provides the necessary data payloads to it via Native Context API (`LoaderDataProvider`).
-
-The client (`entry-client.jsx`) reads the path (`window.location.pathname`), fetches the respective Component via the exact same URL Matcher, and drops it into `hydrateRoot()`. 
-
-Since no external dependencies process or control React elements during initialization, the Vite compiler perfectly synchronizes identically built Client and Server React module caches.
+### 2. Component Rendering via React Router
+The payload is then fed into standard `<StaticRouter>` (Server) and `<BrowserRouter>` (Client) wrappers that render `<Routes>` identically, utilizing React Router's rich hook ecosystem (e.g. `useParams`, `useLocation`) natively inside your components. By manually syncing the Loader Data context below the Router boundaries, the Vite compiler perfectly synchronizes identical Client and Server React module caches.
 
 ### 3. Native Hard-Navigation
 Client Side Single-Page Application (SPA) links using `<Link>` heavily fracture context boundaries in isomorphic Vite SSR pipelines without dedicated meta-framework orchestration.
